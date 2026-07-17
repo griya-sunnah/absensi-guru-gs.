@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Absensi Guru - Griya Sunnah</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f0f4f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+            max-width: 480px;
+            width: 100%;
+        }
+        h1 { text-align: center; color: #1d4a33; font-size: 22px; }
+        .subtitle { text-align: center; color: #888; font-size: 12px; margin-bottom: 15px; }
+        .nav-tabs {
+            display: flex; gap: 5px; margin-bottom: 15px;
+            background: #f0f4f0; border-radius: 10px; padding: 4px;
+        }
+        .nav-tabs button {
+            flex: 1; padding: 8px; border: none; border-radius: 8px;
+            font-weight: 600; font-size: 13px; cursor: pointer;
+            background: transparent; color: #555;
+        }
+        .nav-tabs button.active { background: #1d4a33; color: white; }
+        .nav-tabs button.danger { color: #dc2626; }
+        .nav-tabs button.danger.active { background: #dc2626; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .form-group { margin-bottom: 12px; }
+        label { display: block; font-weight: 600; font-size: 13px; color: #333; margin-bottom: 4px; }
+        input, select, textarea {
+            width: 100%; padding: 10px 12px;
+            border: 2px solid #ddd; border-radius: 8px; font-size: 14px;
+        }
+        input:focus, select:focus, textarea:focus { border-color: #1d4a33; outline: none; }
+        input[readonly] { background: #f5f5f5; color: #555; }
+        textarea { resize: vertical; min-height: 60px; }
+        .btn-absen {
+            width: 100%; padding: 14px;
+            background: linear-gradient(135deg, #1d4a33, #2d6a4f);
+            color: white; border: none; border-radius: 60px;
+            font-size: 18px; font-weight: 700; cursor: pointer; margin-top: 8px;
+        }
+        .btn-absen:hover { transform: scale(1.02); box-shadow: 0 6px 20px rgba(29,74,51,0.3); }
+        .btn-absen:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-absen.sudah { background: #6b7280; cursor: not-allowed; }
+        .btn-izin {
+            width: 100%; padding: 14px;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white; border: none; border-radius: 60px;
+            font-size: 18px; font-weight: 700; cursor: pointer; margin-top: 8px;
+        }
+        .btn-izin:hover { transform: scale(1.02); box-shadow: 0 6px 20px rgba(245,158,11,0.3); }
+        .btn-kirim {
+            width: 100%; padding: 12px;
+            background: linear-gradient(135deg, #2563eb, #3b82f6);
+            color: white; border: none; border-radius: 60px;
+            font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 8px;
+        }
+        .btn-kirim.orange { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .btn-danger {
+            width: 100%; padding: 12px;
+            background: #dc2626;
+            color: white; border: none; border-radius: 60px;
+            font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 8px;
+        }
+        .btn-danger:hover { opacity: 0.8; }
+        .btn-danger:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-sm {
+            padding: 6px 14px;
+            border: none; border-radius: 20px;
+            font-size: 12px; font-weight: 600; cursor: pointer;
+        }
+        .btn-sm.success { background: #22c55e; color: white; }
+        .btn-sm.danger { background: #dc2626; color: white; }
+        .btn-sm.warning { background: #f59e0b; color: white; }
+        .status-box {
+            margin-top: 12px; padding: 10px; border-radius: 8px;
+            text-align: center; font-weight: 600; display: none; font-size: 13px;
+        }
+        .status-box.success { display: block; background: #daf0e0; color: #1d7a41; }
+        .status-box.error { display: block; background: #fee2e2; color: #dc2626; }
+        .status-box.info { display: block; background: #dbeafe; color: #2563eb; }
+        .status-box.warning { display: block; background: #fef3c7; color: #92400e; }
+        .jam-info {
+            background: #f8f8f8; padding: 8px; border-radius: 8px;
+            text-align: center; font-size: 12px; color: #555; margin: 8px 0;
+        }
+        .jam-info span { font-weight: 700; color: #1d4a33; }
+        .batas-absen {
+            background: #fee2e2; padding: 8px 12px; border-radius: 8px;
+            text-align: center; font-size: 14px; font-weight: 700; color: #dc2626;
+            margin: 8px 0; border: 2px solid #dc2626;
+        }
+        .batas-absen span { font-size: 18px; }
+        .riwayat-box { margin-top: 12px; border-top: 1px solid #eee; padding-top: 10px; }
+        .riwayat-box p { font-weight: 600; font-size: 13px; color: #333; margin-bottom: 5px; }
+        #riwayat { font-size: 13px; color: #555; max-height: 250px; overflow-y: auto; }
+        #riwayat .item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 14px 16px; border-bottom: 2px solid #e8f5e9;
+            background: #fafffe; border-radius: 10px; margin-bottom: 6px;
+        }
+        #riwayat .item .nama-guru {
+            font-size: 28px; font-weight: 900; color: #1d4a33;
+            letter-spacing: 0.5px; line-height: 1.2;
+        }
+        #riwayat .item .nama-guru .icon-status { font-size: 24px; margin-right: 8px; }
+        #riwayat .item .jam-guru { font-size: 14px; color: #888; font-weight: 600; margin-top: 2px; }
+        #riwayat .item .status-guru {
+            font-size: 20px; font-weight: 800; padding: 6px 18px;
+            border-radius: 30px; min-width: 100px; text-align: center;
+            background: #daf0e0; color: #1d7a41;
+        }
+        .rekap-info {
+            background: #fef3c7; padding: 10px; border-radius: 8px;
+            text-align: center; font-size: 14px; color: #92400e;
+            margin-top: 8px; font-weight: 600;
+        }
+        .rekap-info span { font-size: 24px; font-weight: 900; color: #1d4a33; }
+        .status-sudah {
+            background: #f3f4f6; color: #6b7280; padding: 8px 10px;
+            border-radius: 8px; text-align: center; font-size: 14px;
+            font-weight: 700; margin-top: 5px; display: none;
+        }
+        .status-sudah.show { display: block; }
+        .wa-status { font-size: 11px; color: #888; text-align: center; margin-top: 5px; }
+        .footer { text-align: center; margin-top: 15px; font-size: 10px; color: #bbb; }
+        .izin-list { font-size: 13px; max-height: 200px; overflow-y: auto; }
+        .izin-list .item {
+            padding: 8px 10px; border-bottom: 1px solid #f0f0f0;
+            background: #fafafa; border-radius: 6px; margin-bottom: 5px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .badge-status { font-size: 12px; padding: 2px 12px; border-radius: 20px; font-weight: 600; }
+        .badge-disetujui { background: #daf0e0; color: #1d7a41; }
+        .izin-doa {
+            background: #dbeafe; padding: 15px; border-radius: 10px;
+            text-align: center; font-size: 17px; font-weight: 700;
+            color: #1d4a33; margin-top: 8px; border: 2px dashed #2563eb;
+        }
+        .izin-doa .doa-sub { font-size: 14px; color: #555; font-weight: 400; margin-top: 4px; }
+        .izin-disetujui {
+            background: #daf0e0; padding: 10px; border-radius: 8px;
+            text-align: center; font-size: 16px; font-weight: 700;
+            color: #1d7a41; margin: 8px 0; border: 2px solid #1d7a41;
+        }
+        .admin-panel {
+            background: #f8f8f8; padding: 15px; border-radius: 10px;
+            margin-top: 10px;
+        }
+        .admin-panel h3 {
+            font-size: 14px; color: #333; margin-bottom: 10px;
+        }
+        .admin-panel .row {
+            display: flex; gap: 8px; flex-wrap: wrap;
+        }
+        .admin-panel .row .btn-sm { flex: 1; text-align: center; }
+        .login-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(5px);
+            z-index: 999; justify-content: center; align-items: center;
+        }
+        .login-overlay.active { display: flex; }
+        .login-box {
+            background: white; padding: 30px; border-radius: 16px;
+            max-width: 350px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .login-box h2 { text-align: center; color: #1d4a33; margin-bottom: 15px; font-size: 18px; }
+        .login-box input {
+            width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 14px; margin-bottom: 10px;
+        }
+        .login-box input:focus { border-color: #1d4a33; outline: none; }
+        .login-box .btn-login {
+            width: 100%; padding: 12px; background: #1d4a33; color: white;
+            border: none; border-radius: 60px; font-size: 16px; font-weight: 700; cursor: pointer;
+        }
+        .login-box .btn-login:hover { opacity: 0.9; }
+        .login-box .error-msg { color: #dc2626; font-size: 13px; text-align: center; margin-top: 8px; display: none; }
+        .admin-locked {
+            background: #fef3c7; padding: 10px; border-radius: 8px;
+            text-align: center; font-size: 13px; color: #92400e; margin-bottom: 10px;
+        }
+        .admin-locked button {
+            background: #1d4a33; color: white; border: none;
+            padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 600;
+            cursor: pointer; margin-top: 5px;
+        }
+        .admin-locked button:hover { opacity: 0.8; }
+        @media (max-width: 480px) {
+            #riwayat .item .nama-guru { font-size: 22px; }
+            #riwayat .item .status-guru { font-size: 16px; padding: 4px 12px; min-width: 80px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- LOGIN ADMIN -->
+<div class="login-overlay" id="loginOverlay">
+    <div class="login-box">
+        <h2>🔒 Login Admin</h2>
+        <p style="font-size:12px;color:#888;text-align:center;margin-bottom:10px;">Masukkan password untuk mengakses menu Admin</p>
+        <input type="password" id="adminPassword" placeholder="Masukkan password" onkeypress="if(event.key==='Enter') loginAdmin()">
+        <button class="btn-login" onclick="loginAdmin()">Login</button>
+        <div class="error-msg" id="loginError">❌ Password salah!</div>
+        <p style="font-size:11px;color:#aaa;text-align:center;margin-top:10px;">Default password: <strong>admin123</strong></p>
+    </div>
+</div>
+
+<div class="container">
+    <h1>🕌 Griya Sunnah</h1>
+    <p class="subtitle">Sistem Absensi Guru <span style="background:#daf0e0;color:#1d7a41;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;">🔒 Aman</span></p>
+
+    <div class="nav-tabs">
+        <button class="active" onclick="openTab('absen')">📌 Absen</button>
+        <button onclick="openTab('izin')">📋 Izin</button>
+        <button class="danger" onclick="openTab('admin')" id="adminTabBtn">⚙️ Admin 🔒</button>
+    </div>
+
+    <!-- TAB ABSEN -->
+    <div id="tab-absen" class="tab-content active">
+        <div class="form-group">
+            <label>👤 Nama Guru</label>
+            <input type="text" id="namaGuru" placeholder="Masukkan nama lengkap" autocomplete="off">
+        </div>
+        <div class="form-group">
+            <label>📅 Tanggal</label>
+            <input type="text" id="tanggal" readonly>
+        </div>
+        <div class="form-group">
+            <label>🕐 Jam Absen</label>
+            <input type="text" id="jamAbsen" readonly>
+        </div>
+
+        <div class="batas-absen">⏰ <span>Paling Telat: 07.15</span> WIB</div>
+        <div class="jam-info">⏰ Batas Tepat Waktu: <span>07:15</span> WIB</div>
+
+        <button class="btn-absen" id="btnAbsen" onclick="absen()">📌 Absen Sekarang</button>
+
+        <div class="status-sudah" id="statusSudah">
+            ✅ Anda sudah absen hari ini pada jam <span id="jamSudah">-</span>
+        </div>
+        <div class="status-box" id="statusBox"></div>
+
+        <div class="rekap-info">📊 <span id="totalAbsenHari">0</span> guru sudah absen hari ini</div>
+
+        <button class="btn-kirim orange" id="btnKirimSekarang" onclick="kirimRekapSekarang()">📨 Kirim Rekap Sekarang</button>
+
+        <div class="status-rekap" id="statusRekap" style="background:#dbeafe;padding:6px;border-radius:8px;text-align:center;font-size:12px;color:#2563eb;margin-top:6px;">⏳ Siap kirim rekap</div>
+
+        <div class="riwayat-box">
+            <p>📋 Riwayat Hari Ini</p>
+            <div id="riwayat"><div style="color:#aaa; text-align:center; padding:10px 0;">Belum ada absen</div></div>
+        </div>
+    </div>
+
+    <!-- TAB IZIN -->
+    <div id="tab-izin" class="tab-content">
+        <div class="izin-doa">
+            🤲 <strong>Izin Guru</strong><br>
+            <span class="doa-sub">"Semoga antum bisa bergabung kembali bersama kami"</span>
+        </div>
+
+        <div class="form-group">
+            <label>👤 Nama Guru</label>
+            <input type="text" id="izinNama" placeholder="Masukkan nama lengkap">
+        </div>
+        <div class="form-group">
+            <label>📋 Jenis Izin</label>
+            <select id="izinJenis">
+                <option value="Sakit">🤒 Sakit</option>
+                <option value="Izin">📋 Izin</option>
+                <option value="Dinas">📋 Dinas</option>
+                <option value="Cuti">🏖️ Cuti</option>
+                <option value="Lainnya">📌 Lainnya</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>📅 Tanggal Izin</label>
+            <input type="date" id="izinTanggal">
+        </div>
+        <div class="form-group">
+            <label>📝 Alasan</label>
+            <textarea id="izinAlasan" placeholder="Jelaskan alasan izin..."></textarea>
+        </div>
+        <button class="btn-izin" onclick="ajukanIzin()">📨 Ajukan Izin</button>
+
+        <div class="izin-disetujui" id="izinDisetujui" style="display:none;">
+            ✅ <strong>Izin Disetujui</strong><br>
+            <span style="font-size:14px;font-weight:400;">🤲 Semoga antum bisa bergabung kembali bersama kami</span>
+        </div>
+
+        <div class="status-box" id="statusIzin"></div>
+
+        <div class="riwayat-box">
+            <p>📋 Riwayat Izin Hari Ini</p>
+            <div class="izin-list" id="izinList">
+                <div style="color:#aaa; text-align:center; padding:10px 0;">Belum ada pengajuan izin</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB ADMIN -->
+    <div id="tab-admin" class="tab-content">
+        <div class="admin-locked" id="adminLocked">
+            🔒 Menu Admin terkunci. <br>
+            <button onclick="showLogin()">Klik untuk Login</button>
+        </div>
+
+        <div id="adminContent" style="display:none;">
+            <div style="background:#daf0e0;padding:8px 12px;border-radius:8px;text-align:center;margin-bottom:10px;">
+                <p style="font-weight:600;color:#1d7a41;font-size:13px;">✅ Anda sudah login sebagai Admin</p>
+                <button onclick="logoutAdmin()" style="background:transparent;border:1px solid #1d7a41;color:#1d7a41;padding:2px 12px;border-radius:20px;font-size:11px;cursor:pointer;">Logout</button>
+            </div>
+
+            <!-- HAPUS RIWAYAT -->
+            <div class="admin-panel">
+                <h3>🗑️ Hapus Riwayat</h3>
+                <p style="font-size:12px;color:#888;margin-bottom:8px;">⚠️ Data yang dihapus tidak bisa dikembalikan!</p>
+                <div class="row">
+                    <button class="btn-sm danger" onclick="hapusRiwayat('absen')">🗑️ Hapus Semua Absen</button>
+                    <button class="btn-sm danger" onclick="hapusRiwayat('izin')">🗑️ Hapus Semua Izin</button>
+                </div>
+                <div class="row" style="margin-top:8px;">
+                    <button class="btn-sm danger" onclick="hapusRiwayat('absen_hari')">🗑️ Hapus Absen Hari Ini</button>
+                    <button class="btn-sm danger" onclick="hapusRiwayat('izin_hari')">🗑️ Hapus Izin Hari Ini</button>
+                </div>
+                <div style="margin-top:8px;">
+                    <button class="btn-sm danger" style="width:100%;padding:8px;font-size:13px;" onclick="hapusSemua()">🗑️ HAPUS SEMUA DATA</button>
+                </div>
+            </div>
+
+            <div class="status-box" id="statusAdmin"></div>
+
+            <div style="margin-top:10px;background:#f0f4f0;padding:10px;border-radius:8px;">
+                <p style="font-weight:600;font-size:13px;">📊 Statistik</p>
+                <p style="font-size:12px;color:#555;">Total Guru: <span id="statTotal">0</span></p>
+                <p style="font-size:12px;color:#555;">Sudah Absen: <span id="statAbsen">0</span></p>
+                <p style="font-size:12px;color:#555;">Belum Absen: <span id="statBelum">0</span></p>
+                <p style="font-size:12px;color:#555;">Izin Hari Ini: <span id="statIzin">0</span></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="wa-status">🔒 Pesan dikirim otomatis via API • Izin langsung disetujui</div>
+    <div class="footer">🔒 Sekali absen, tidak bisa absen lagi hari ini</div>
+</div>
+
+<script>
+    // ===== KONFIGURASI =====
+    const BATAS_JAM = '07:15';
+    const NO_ADMIN = '6283837985580';
+    const API_KEY = 'xhKFoc2YRbQXwFzvVXYf';
+    const ADMIN_PASSWORD = 'admin123';
+
+    let dataAbsen = [];
+    let dataIzin = [];
+    let isAdmin = false;
+
+    function loadData() {
+        const stored = localStorage.getItem('absenData');
+        if (stored) { try { dataAbsen = JSON.parse(stored); } catch(e) { dataAbsen = []; } } else { dataAbsen = []; }
+        const izinStored = localStorage.getItem('izinData');
+        if (izinStored) { try { dataIzin = JSON.parse(izinStored); } catch(e) { dataIzin = []; } } else { dataIzin = []; }
+    }
+
+    function saveData() {
+        localStorage.setItem('absenData', JSON.stringify(dataAbsen));
+        localStorage.setItem('izinData', JSON.stringify(dataIzin));
+        updateStatistik();
+    }
+
+    // ===== SET TANGGAL & JAM =====
+    function updateJam() {
+        const now = new Date();
+        const jam = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+        document.getElementById('jamAbsen').value = jam;
+        return jam;
+    }
+
+    document.getElementById('tanggal').value = new Date().toISOString().split('T')[0];
+    document.getElementById('izinTanggal').value = new Date().toISOString().split('T')[0];
+    updateJam();
+    setInterval(updateJam, 10000);
+
+    function cekStatus(jam) {
+        return jam > BATAS_JAM ? 'terlambat' : 'tepat_waktu';
+    }
+
+    // ===== KIRIM WA VIA API =====
+    async function kirimWAAPI(pesan) {
+        const url = 'https://api.fonnte.com/send';
+        const data = { target: NO_ADMIN, message: pesan, countryCode: '62' };
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Authorization': API_KEY, 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await response.json();
+            console.log('✅ WA terkirim:', result);
+            return result;
+        } catch (error) {
+            console.error('❌ Gagal kirim WA:', error);
+            return null;
+        }
+    }
+
+    // ===== CEK SUDAH ABSEN =====
+    function cekSudahAbsen() {
+        const nama = document.getElementById('namaGuru').value.trim();
+        const tanggal = document.getElementById('tanggal').value;
+        const btn = document.getElementById('btnAbsen');
+        const statusSudah = document.getElementById('statusSudah');
+        const jamSudah = document.getElementById('jamSudah');
+
+        if (!nama) {
+            btn.className = 'btn-absen';
+            btn.innerHTML = '📌 Absen Sekarang';
+            btn.disabled = false;
+            statusSudah.classList.remove('show');
+            return;
+        }
+
+        const sudah = dataAbsen.find(a => a.nama === nama && a.tanggal === tanggal);
+        if (sudah) {
+            btn.className = 'btn-absen sudah';
+            btn.innerHTML = '❌ Sudah Absen';
+            btn.disabled = true;
+            statusSudah.classList.add('show');
+            jamSudah.textContent = sudah.jam;
+        } else {
+            btn.className = 'btn-absen';
+            btn.innerHTML = '📌 Absen Sekarang';
+            btn.disabled = false;
+            statusSudah.classList.remove('show');
+        }
+    }
+
+    // ===== FUNGSI ABSEN =====
+    function absen() {
+        const nama = document.getElementById('namaGuru').value.trim();
+        const tanggal = document.getElementById('tanggal').value;
+        const jam = document.getElementById('jamAbsen').value;
+        const status = cekStatus(jam);
+        const btn = document.getElementById('btnAbsen');
+        const statusBox = document.getElementById('statusBox');
+
+        if (!nama) {
+            statusBox.className = 'status-box error';
+            statusBox.innerHTML = '⚠️ Nama guru wajib diisi!';
+            setTimeout(() => { statusBox.className = 'status-box'; }, 3000);
+            return;
+        }
+
+        const sudahAbsen = dataAbsen.some(a => a.nama === nama && a.tanggal === tanggal);
+        if (sudahAbsen) {
+            statusBox.className = 'status-box warning';
+            statusBox.innerHTML = '⚠️ Anda sudah absen hari ini!';
+            setTimeout(() => { statusBox.className = 'status-box'; }, 4000);
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '⏳ Memproses...';
+        statusBox.className = 'status-box info';
+        statusBox.innerHTML = '⏳ Menyimpan absen...';
+
+        const dataBaru = { id: Date.now(), nama, tanggal, jam, status, statusText: 'Hadir', waktu: new Date().toLocaleTimeString() };
+        dataAbsen.push(dataBaru);
+        saveData();
+
+        const statusLabel = status === 'tepat_waktu' ? '🟢 Tepat Waktu' : '🔴 Terlambat';
+        const notifPesan = 
+            `✅ *ABSENSI GURU*\n━━━━━━━━━━━━━━━━\n👤 Nama: ${nama}\n📅 Tanggal: ${tanggal}\n🕐 Jam: ${jam} WIB\n📊 Status: ${statusLabel}\n━━━━━━━━━━━━━━━━\n_Dikirim otomatis dari Sistem Absensi_`;
+        kirimWAAPI(notifPesan);
+
+        statusBox.className = 'status-box success';
+        statusBox.innerHTML = `✅ Absen berhasil! ✅ Hadir`;
+
+        btn.disabled = false;
+        btn.className = 'btn-absen sudah';
+        btn.innerHTML = '✅ Sudah Absen';
+        btn.disabled = true;
+
+        document.getElementById('statusSudah').classList.add('show');
+        document.getElementById('jamSudah').textContent = jam;
+
+        tampilRiwayat();
+        updateTotal();
+
+        setTimeout(() => { statusBox.className = 'status-box'; }, 5000);
+    }
+
+    // ===== AJUKAN IZIN =====
+    function ajukanIzin() {
+        const nama = document.getElementById('izinNama').value.trim();
+        const jenis = document.getElementById('izinJenis').value;
+        const tanggal = document.getElementById('izinTanggal').value;
+        const alasan = document.getElementById('izinAlasan').value.trim();
+        const statusBox = document.getElementById('statusIzin');
+        const disetujuiBox = document.getElementById('izinDisetujui');
+
+        if (!nama || !alasan) {
+            statusBox.className = 'status-box error';
+            statusBox.innerHTML = '⚠️ Nama dan alasan wajib diisi!';
+            setTimeout(() => { statusBox.className = 'status-box'; }, 3000);
+            return;
+        }
+
+        const sudahIzin = dataIzin.some(a => a.nama === nama && a.tanggal === tanggal);
+        if (sudahIzin) {
+            statusBox.className = 'status-box warning';
+            statusBox.innerHTML = '⚠️ Anda sudah izin hari ini!';
+            setTimeout(() => { statusBox.className = 'status-box'; }, 4000);
+            return;
+        }
+
+        const dataIzinBaru = {
+            id: Date.now(),
+            nama: nama,
+            jenis: jenis,
+            tanggal: tanggal,
+            alasan: alasan,
+            status: 'disetujui',
+            waktu: new Date().toLocaleTimeString()
+        };
+
+        dataIzin.push(dataIzinBaru);
+        saveData();
+
+        disetujuiBox.style.display = 'block';
+        disetujuiBox.innerHTML = `
+            ✅ <strong>Izin Disetujui</strong><br>
+            <span style="font-size:14px;font-weight:400;">🤲 Semoga antum bisa bergabung kembali bersama kami</span>
+        `;
+
+        const pesanIzin =
+            `📋 *IZIN GURU - DISETUJUI*\n` +
+            `━━━━━━━━━━━━━━━━\n` +
+            `👤 Nama: ${nama}\n` +
+            `📋 Jenis: ${jenis}\n` +
+            `📅 Tanggal: ${tanggal}\n` +
+            `📝 Alasan: ${alasan}\n` +
+            `━━━━━━━━━━━━━━━━\n` +
+            `✅ *IZIN DISETUJUI*\n` +
+            `🤲 *Semoga antum bisa bergabung kembali bersama kami*\n` +
+            `━━━━━━━━━━━━━━━━\n` +
+            `_Dikirim otomatis dari Sistem Absensi_`;
+        kirimWAAPI(pesanIzin);
+
+        statusBox.className = 'status-box success';
+        statusBox.innerHTML = '✅ Izin berhasil diajukan dan disetujui!';
+
+        document.getElementById('izinAlasan').value = '';
+        tampilIzin();
+
+        setTimeout(() => {
+            statusBox.className = 'status-box';
+            setTimeout(() => {
+                disetujuiBox.style.display = 'none';
+            }, 8000);
+        }, 4000);
+    }
+
+    // ===== HAPUS RIWAYAT =====
+    function hapusRiwayat(jenis) {
+        const today = new Date().toISOString().split('T')[0];
+        let pesan = '';
+        let konfirmasi = '';
+
+        switch(jenis) {
+            case 'absen':
+                konfirmasi = 'Yakin ingin menghapus SEMUA data absen?';
+                pesan = '✅ Semua data absen berhasil dihapus!';
+                if (confirm(konfirmasi)) {
+                    dataAbsen = [];
+                    saveData();
+                    showToastAdmin(pesan, 'success');
+                    tampilRiwayat();
+                    updateTotal();
+                    updateStatistik();
+                }
+                break;
+            case 'izin':
+                konfirmasi = 'Yakin ingin menghapus SEMUA data izin?';
+                pesan = '✅ Semua data izin berhasil dihapus!';
+                if (confirm(konfirmasi)) {
+                    dataIzin = [];
+                    saveData();
+                    showToastAdmin(pesan, 'success');
+                    tampilIzin();
+                    updateStatistik();
+                }
+                break;
+            case 'absen_hari':
+                konfirmasi = 'Yakin ingin menghapus data absen hari ini?';
+                pesan = '✅ Data absen hari ini berhasil dihapus!';
+                if (confirm(konfirmasi)) {
+                    dataAbsen = dataAbsen.filter(a => a.tanggal !== today);
+                    saveData();
+                    showToastAdmin(pesan, 'success');
+                    tampilRiwayat();
+                    updateTotal();
+                    updateStatistik();
+                }
+                break;
+            case 'izin_hari':
+                konfirmasi = 'Yakin ingin menghapus data izin hari ini?';
+                pesan = '✅ Data izin hari ini berhasil dihapus!';
+                if (confirm(konfirmasi)) {
+                    dataIzin = dataIzin.filter(a => a.tanggal !== today);
+                    saveData();
+                    showToastAdmin(pesan, 'success');
+                    tampilIzin();
+                    updateStatistik();
+                }
+                break;
+        }
+    }
+
+    function hapusSemua() {
+        if (confirm('⚠️ Yakin ingin menghapus SEMUA data (absen + izin)? Data tidak bisa dikembalikan!')) {
+            if (confirm('⚠️ KONFIRMASI TERAKHIR: Hapus semua data?')) {
+                dataAbsen = [];
+                dataIzin = [];
+                saveData();
+                showToastAdmin('✅ Semua data berhasil dihapus!', 'success');
+                tampilRiwayat();
+                tampilIzin();
+                updateTotal();
+                updateStatistik();
+            }
+        }
+    }
+
+    function showToastAdmin(msg, type) {
+        const box = document.getElementById('statusAdmin');
+        box.className = `status-box ${type}`;
+        box.innerHTML = msg;
+        setTimeout(() => { box.className = 'status-box'; }, 4000);
+    }
+
+    // ===== TAMPIL IZIN =====
+    function tampilIzin() {
+        const izinDiv = document.getElementById('izinList');
+        const today = new Date().toISOString().split('T')[0];
+        const izinHari = dataIzin.filter(a => a.tanggal === today);
+
+        if (izinHari.length === 0) {
+            izinDiv.innerHTML = `<div style="color:#aaa; text-align:center; padding:10px 0;">Belum ada pengajuan izin</div>`;
+            return;
+        }
+
+        let html = '';
+        izinHari.forEach(a => {
+            html += `
+                <div class="item">
+                    <div><strong>${a.nama}</strong> - ${a.jenis}</div>
+                    <div><span class="badge-status badge-disetujui">✅ Disetujui</span></div>
+                </div>
+            `;
+        });
+        izinDiv.innerHTML = html;
+    }
+
+    // ===== TAMPIL RIWAYAT =====
+    function tampilRiwayat() {
+        const riwayatDiv = document.getElementById('riwayat');
+        const today = document.getElementById('tanggal').value;
+        const hariIni = dataAbsen.filter(a => a.tanggal === today);
+
+        if (hariIni.length === 0) {
+            riwayatDiv.innerHTML = `<div style="color:#aaa; text-align:center; padding:20px 0; font-size:16px;">Belum ada absen</div>`;
+            return;
+        }
+
+        let html = '';
+        hariIni.forEach(a => {
+            html += `
+                <div class="item">
+                    <div>
+                        <div class="nama-guru">
+                            <span class="icon-status">✅</span>
+                            ${a.nama}
+                        </div>
+                        <div class="jam-guru">🕐 ${a.jam} WIB</div>
+                    </div>
+                    <div class="status-guru hadir">✅ Hadir</div>
+                </div>
+            `;
+        });
+        riwayatDiv.innerHTML = html;
+    }
+
+    // ===== KIRIM REKAP =====
+    async function kirimRekapSekarang() {
+        const tanggal = document.getElementById('tanggal').value;
+        const hariIni = dataAbsen.filter(a => a.tanggal === tanggal);
+        const statusRekap = document.getElementById('statusRekap');
+        const statusBox = document.getElementById('statusBox');
+
+        if (hariIni.length === 0) {
+            statusBox.className = 'status-box error';
+            statusBox.innerHTML = '⚠️ Belum ada data absen hari ini!';
+            setTimeout(() => { statusBox.className = 'status-box'; }, 3000);
+            return;
+        }
+
+        statusRekap.innerHTML = '⏳ Mengirim rekap...';
+        
+        let daftarGuru = '';
+        hariIni.forEach((a, i) => {
+            const statusLabel = a.status === 'tepat_waktu' ? '✅ Tepat Waktu' : '🔴 Terlambat';
+            daftarGuru += `${i+1}. *${a.nama}* - ${a.jam} ${statusLabel}\n`;
+        });
+
+        const pesanWA =
+            `📊 *REKAP ABSENSI HARI INI*\n` +
+            `━━━━━━━━━━━━━━━━━━━━\n` +
+            `📅 Tanggal: ${tanggal}\n` +
+            `👨‍🏫 *Total Guru: ${hariIni.length} orang*\n` +
+            `━━━━━━━━━━━━━━━━━━━━\n` +
+            `📋 *Daftar Guru:*\n\n` +
+            `${daftarGuru}\n` +
+            `━━━━━━━━━━━━━━━━━━━━\n` +
+            `_Dikirim otomatis dari Sistem Absensi Griya Sunnah_`;
+
+        const result = await kirimWAAPI(pesanWA);
+
+        if (result && result.status) {
+            statusRekap.innerHTML = '✅ Rekap berhasil dikirim!';
+            statusBox.className = 'status-box success';
+            statusBox.innerHTML = '✅ Rekap berhasil dikirim! Cek WhatsApp.';
+        } else {
+            statusRekap.innerHTML = '❌ Gagal mengirim rekap!';
+            statusBox.className = 'status-box error';
+            statusBox.innerHTML = '❌ Gagal mengirim rekap!';
+        }
+        setTimeout(() => { statusBox.className = 'status-box'; }, 4000);
+    }
+
+    function updateTotal() {
+        const today = document.getElementById('tanggal').value;
+        const hariIni = dataAbsen.filter(a => a.tanggal === today);
+        document.getElementById('totalAbsenHari').textContent = hariIni.length;
+    }
+
+    function updateStatistik() {
+        const today = document.getElementById('tanggal').value;
+        const semuaGuru = [...new Set(dataAbsen.map(a => a.nama))];
+        const sudahAbsen = dataAbsen.filter(a => a.tanggal === today);
+        const izinHari = dataIzin.filter(a => a.tanggal === today);
+
+        document.getElementById('statTotal').textContent = semuaGuru.length || 0;
+        document.getElementById('statAbsen').textContent = sudahAbsen.length;
+        document.getElementById('statIzin').textContent = izinHari.length;
+        document.getElementById('statBelum').textContent = Math.max(0, (semuaGuru.length || 0) - sudahAbsen.length);
+    }
+
+    // ===== LOGIN ADMIN =====
+    function loginAdmin() {
+        const password = document.getElementById('adminPassword').value;
+        const errorEl = document.getElementById('loginError');
+
+        if (password === ADMIN_PASSWORD) {
+            isAdmin = true;
+            document.getElementById('loginOverlay').classList.remove('active');
+            document.getElementById('adminLocked').style.display = 'none';
+            document.getElementById('adminContent').style.display = 'block';
+            document.getElementById('adminPassword').value = '';
+            errorEl.style.display = 'none';
+            updateStatistik();
+        } else {
+            errorEl.style.display = 'block';
+            setTimeout(() => { errorEl.style.display = 'none'; }, 3000);
+        }
+    }
+
+    function showLogin() {
+        document.getElementById('loginOverlay').classList.add('active');
+        document.getElementById('adminPassword').focus();
+    }
+
+    function logoutAdmin() {
+        isAdmin = false;
+        document.getElementById('adminLocked').style.display = 'block';
+        document.getElementById('adminContent').style.display = 'none';
+        showToastAdmin('🔒 Anda telah logout', 'info');
+    }
+
+    function openTab(tab) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-tabs button').forEach(el => el.classList.remove('active'));
+        document.getElementById('tab-' + tab).classList.add('active');
+        document.querySelector(`.nav-tabs button[onclick="openTab('${tab}')"]`).classList.add('active');
+        if (tab === 'izin') tampilIzin();
+        if (tab === 'admin' && isAdmin) updateStatistik();
+    }
+
+    document.getElementById('namaGuru').addEventListener('input', cekSudahAbsen);
+    document.getElementById('namaGuru').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') absen();
+    });
+
+    loadData();
+    tampilRiwayat();
+    tampilIzin();
+    updateTotal();
+    updateStatistik();
+    setTimeout(cekSudahAbsen, 100);
+
+    console.log('✅ Sistem Absensi + Izin siap!');
+    console.log('🔒 Password Admin: admin123');
+    console.log('🗑️ Menu hapus riwayat ada di tab Admin');
+</script>
+
+</body>
+</html>
